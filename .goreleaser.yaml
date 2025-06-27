@@ -1,0 +1,32 @@
+version: 2
+builds:
+  - main: ./cmd/rvglsm
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+    hooks:
+      post:
+        - upx {{ .Path }}
+release:
+  prerelease: auto
+changelog:
+  use: github
+  filters:
+    exclude:
+      - merge conflict
+      - Merge pull request
+      - Merge remote-tracking branch
+      - Merge branch
+brews:
+  - repository:
+      owner: frantjc
+      name: homebrew-tap
+    directory: Formula
+    skip_upload: auto
+    homepage:  https://github.com/frantjc/rvgl-utils
+    license: MIT
+    test: |
+      system "#{bin}/rvglsm --version"
