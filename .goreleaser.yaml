@@ -1,6 +1,7 @@
 version: 2
 builds:
   - main: ./cmd/rvglsm
+    binary: rvglsm
     env:
       - CGO_ENABLED=0
     goos:
