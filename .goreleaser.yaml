@@ -25,6 +25,7 @@ brews:
       owner: frantjc
       name: homebrew-tap
     name: rvglsm
+    binary: rvglsm
     directory: Formula
     skip_upload: auto
     homepage:  https://github.com/frantjc/rvgl-utils
