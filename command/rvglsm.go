@@ -29,7 +29,7 @@ func NewRVGLSM() *cobra.Command {
 					return fmt.Errorf("resolve session .csv: %w", err)
 				}
 
-				fmt.Fprintf(cmd.ErrOrStderr(), "resolved session %q\n", sessionCsv)
+				_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "resolved session %q\n", sessionCsv)
 
 				var sink rvglutils.Sink = &stdout.Sink{Writer: cmd.OutOrStdout()}
 
@@ -39,24 +39,24 @@ func NewRVGLSM() *cobra.Command {
 						return fmt.Errorf("open sink: %w", err)
 					}
 
-					fmt.Fprintln(cmd.ErrOrStderr(), "opened sink")
+					_, _ = fmt.Fprintln(cmd.ErrOrStderr(), "opened sink")
 				}
 
 				watcher, err := fsnotify.NewWatcher()
 				if err != nil {
 					return fmt.Errorf("init file watcher: %w", err)
 				}
-				defer watcher.Close()
+				defer watcher.Close() //nolint:errcheck
 
 				if err := watcher.Add(filepath.Dir(sessionCsv)); err != nil {
 					return fmt.Errorf("watch %q: %w", sessionCsv, err)
 				}
 
-				fmt.Fprintf(cmd.ErrOrStderr(), "began watch on %q\n", sessionCsv)
+				_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "began watch on %q\n", sessionCsv)
 
 				go func() {
 					for err := range watcher.Errors {
-						fmt.Fprintf(cmd.ErrOrStderr(), "watch: %v\n", err)
+						_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "watch: %v\n", err)
 					}
 				}()
 
@@ -68,11 +68,15 @@ func NewRVGLSM() *cobra.Command {
 								watcher.Errors <- fmt.Errorf("open %q: %w", sessionCsv, err)
 								continue
 							}
-							defer file.Close()
 
 							session, err := rvglutils.DecodeSessionCSV(file)
 							if err != nil {
 								watcher.Errors <- fmt.Errorf("decode %q: %w", sessionCsv, err)
+								continue
+							}
+
+							if err := file.Close(); err != nil {
+								watcher.Errors <- fmt.Errorf("close %q: %w", file.Name(), err)
 								continue
 							}
 
@@ -88,7 +92,7 @@ func NewRVGLSM() *cobra.Command {
 				if err != nil {
 					watcher.Errors <- fmt.Errorf("open %q: %w", sessionCsv, err)
 				}
-				defer file.Close()
+				defer file.Close() //nolint:errcheck
 
 				session, err := rvglutils.DecodeSessionCSV(file)
 				if err != nil {

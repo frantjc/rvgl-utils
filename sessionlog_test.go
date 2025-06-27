@@ -38,7 +38,9 @@ func TestResolveSessionCSVByTime(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open %q: %v", name, err)
 	}
-	defer file.Close()
+	t.Cleanup(func() {
+		_ = file.Close()
+	})
 
 	_, err = rvglutils.DecodeSessionCSV(file)
 	if err != nil {
@@ -68,7 +70,9 @@ func TestResolveSessionCSVByName(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open %q: %v", name, err)
 	}
-	defer file.Close()
+	t.Cleanup(func() {
+		_ = file.Close()
+	})
 
 	_, err = rvglutils.DecodeSessionCSV(file)
 	if err != nil {

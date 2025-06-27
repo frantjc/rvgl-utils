@@ -76,7 +76,7 @@ func (s *Sink) UpdateScore(ctx context.Context, session *rvglutils.Session, scor
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint:errcheck
 
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
 		data := struct {

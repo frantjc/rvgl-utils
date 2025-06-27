@@ -222,10 +222,21 @@ func DecodeSessionCSV(r io.Reader) (*Session, error) {
 			}
 
 			session.Date, err = time.Parse(time.ANSIC, record[1])
+			if err != nil {
+				return nil, err
+			}
+
 			session.Host = record[2]
 			session.Mode = record[3]
 			session.Laps, err = strconv.Atoi(record[4])
+			if err != nil {
+				return nil, err
+			}
+
 			session.AI, err = strconv.ParseBool(record[5])
+			if err != nil {
+				return nil, err
+			}
 		case "Results":
 			if len(record) < 3 {
 				return nil, fmt.Errorf("not enough fields in results line")
