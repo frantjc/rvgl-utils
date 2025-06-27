@@ -24,11 +24,11 @@ brews:
   - repository:
       owner: frantjc
       name: homebrew-tap
-    name: rvglsm
-    binary: rvglsm
     directory: Formula
     skip_upload: auto
     homepage:  https://github.com/frantjc/rvgl-utils
     license: MIT
+    install: |
+      bin.install "rvglsm"
     test: |
       system "#{bin}/rvglsm --version"
