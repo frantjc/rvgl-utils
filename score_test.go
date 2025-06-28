@@ -15,10 +15,10 @@ func TestScoreSession(t *testing.T) {
 	}
 
 	var (
-		score = rvglutils.ScoreSession(session)
+		score     = rvglutils.ScoreSession(session)
 		lenScores = len(score)
 	)
-	
+
 	if lenScores == 0 {
 		t.Fatal("empty score")
 	}

@@ -29,10 +29,6 @@ type Sink struct {
 }
 
 func (s *Sink) UpdateScore(ctx context.Context, session *rvglutils.Session, scores []rvglutils.Score) error {
-	if len(scores) == 0 {
-		return fmt.Errorf("no scores to send")
-	}
-
 	content := strings.Builder{}
 
 	if _, err := content.WriteString(fmt.Sprintf("%s, %s, hosted by %s on %s\n", session.Version, session.Mode, session.Host, session.Date.Format(time.RFC3339))); err != nil {
