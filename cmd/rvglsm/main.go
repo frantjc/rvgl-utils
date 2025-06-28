@@ -18,6 +18,8 @@ func main() {
 		ctx, stop = signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	)
 
+	cmd.Version = SemVer()
+
 	err := cmd.ExecuteContext(ctx)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
