@@ -41,7 +41,7 @@ func (s *Sink) UpdateScore(ctx context.Context, session *rvglutils.Session, scor
 		}
 	}
 
-	u, err := url.Parse(fmt.Sprintf("https://discordapp.com/api/webhooks/%s/%s", s.ChannelID, s.Token))
+	u, err := url.Parse(fmt.Sprintf("https://discordapp.com/api/webhooks/%s/%s?wait=true", s.ChannelID, s.Token))
 	if err != nil {
 		return err
 	}
@@ -85,6 +85,18 @@ func (s *Sink) UpdateScore(ctx context.Context, session *rvglutils.Session, scor
 		}
 
 		return fmt.Errorf("%s %s: %d %s", method, u, data.Code, data.Message)
+	} else if s.MessageID == "" {
+		data := struct {
+			ID string `json:"id"`
+		}{}
+
+		if err := json.NewDecoder(res.Body).Decode(&data); err != nil {
+			return err
+		} else if data.ID == "" {
+			return fmt.Errorf("missing message ID in successful response")
+		}
+
+		s.MessageID = data.ID
 	}
 
 	return nil
