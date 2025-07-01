@@ -6,8 +6,24 @@ import (
 	"net/url"
 )
 
+type UpdateSessionOpts struct {
+	Final bool
+}
+
+func (o *UpdateSessionOpts) Apply(opts *UpdateSessionOpts) {
+	if o != nil {
+		if opts != nil {
+			o.Final = opts.Final
+		}
+	}
+}
+
+type UpdateSessionOpt interface {
+	Apply(*UpdateSessionOpts)
+}
+
 type Sink interface {
-	UpdateScore(context.Context, *Session, []Score) error
+	UpdateSession(context.Context, *Session, ...UpdateSessionOpt) error
 }
 
 type SinkOpener interface {

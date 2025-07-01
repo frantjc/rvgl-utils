@@ -1,6 +1,9 @@
 package rvglutils
 
-import "sort"
+import (
+	"sort"
+	"strings"
+)
 
 type ScoreSessionOpts struct {
 	IncludeAI bool
@@ -34,20 +37,20 @@ func newScoreSessionOpts(opts ...ScoreSessionOpt) *ScoreSessionOpts {
 }
 
 func ScoreSession(session *Session, opts ...ScoreSessionOpt) []Score {
+	if session == nil {
+		return []Score{}
+	}
+
 	var (
 		o   = newScoreSessionOpts(opts...)
 		tmp = make(map[string]int)
 	)
 
-	if session == nil {
-		return []Score{}
-	}
-
 	for _, race := range session.Races {
 		players := len(race.Results)
 
 		for _, result := range race.Results {
-			if !o.IncludeAI && result.Car == result.Player {
+			if !o.IncludeAI && (result.Car == result.Player || strings.ToUpper(result.Player) != result.Player) {
 				continue
 			}
 

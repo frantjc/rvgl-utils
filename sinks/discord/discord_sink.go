@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -22,26 +23,42 @@ const (
 )
 
 type Sink struct {
-	ChannelID  string
-	Token      string
-	MessageID  string
-	HTTPClient *http.Client
+	ChannelID        string
+	Token            string
+	MessageID        string
+	ScoreSessionOpts *rvglutils.ScoreSessionOpts
+	HTTPClient       *http.Client
 }
 
-func (s *Sink) UpdateScore(ctx context.Context, session *rvglutils.Session, scores []rvglutils.Score) error {
-	content := strings.Builder{}
+func (s *Sink) UpdateSession(ctx context.Context, session *rvglutils.Session, opts ...rvglutils.UpdateSessionOpt) error {
+	var (
+		o       = new(rvglutils.UpdateSessionOpts)
+		content = strings.Builder{}
+	)
+
+	for _, opt := range opts {
+		opt.Apply(o)
+	}
 
 	if _, err := content.WriteString(fmt.Sprintf("%s, %s, hosted by %s on %s\n", session.Version, session.Mode, session.Host, session.Date.Format(time.RFC3339))); err != nil {
 		return err
 	}
 
-	for _, score := range scores {
-		if _, err := content.WriteString(fmt.Sprintf("%s: %d\n", score.Player, score.Points)); err != nil {
+	scores := rvglutils.ScoreSession(session, s.ScoreSessionOpts)
+
+	for i, score := range scores {
+		format := "%s: %d\n"
+
+		if o.Final && i == 0 {
+			format = "**WINNER! %s**: %d\n"
+		}
+
+		if _, err := content.WriteString(fmt.Sprintf(format, score.Player, score.Points)); err != nil {
 			return err
 		}
 	}
 
-	u, err := url.Parse(fmt.Sprintf("https://discordapp.com/api/webhooks/%s/%s?wait=true", s.ChannelID, s.Token))
+	u, err := url.Parse(fmt.Sprintf("https://discordapp.com/api/webhooks/%s/%s", s.ChannelID, s.Token))
 	if err != nil {
 		return err
 	}
@@ -56,6 +73,10 @@ func (s *Sink) UpdateScore(ctx context.Context, session *rvglutils.Session, scor
 	if s.MessageID != "" {
 		u = u.JoinPath("messages", s.MessageID)
 		method = http.MethodPatch
+	} else {
+		q := u.Query()
+		q.Add("wait", "true")
+		u.RawQuery = q.Encode()
 	}
 
 	req, err := http.NewRequestWithContext(ctx, method, u.String(), bytes.NewReader(body))
@@ -110,10 +131,25 @@ func (o *sinkOpener) Open(ctx context.Context, u *url.URL) (rvglutils.Sink, erro
 	}
 
 	var (
+		includeAI bool
+		err       error
+	)
+
+	if rawIncludeAI := u.Query().Get("include-ai"); rawIncludeAI != "" {
+		includeAI, err = strconv.ParseBool(rawIncludeAI)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var (
 		s = &Sink{
 			ChannelID: u.Host,
 			MessageID: strings.TrimPrefix(u.Path, "/"),
 			Token:     u.User.Username(),
+			ScoreSessionOpts: &rvglutils.ScoreSessionOpts{
+				IncludeAI: includeAI,
+			},
 		}
 	)
 

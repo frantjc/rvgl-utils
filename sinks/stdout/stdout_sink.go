@@ -24,8 +24,8 @@ type Sink struct {
 	io.Writer
 }
 
-func (s *Sink) UpdateScore(_ context.Context, session *rvglutils.Session, scores []rvglutils.Score) error {
-	return unixtable.NewEncoder(s.Writer).Encode(scores)
+func (s *Sink) UpdateSession(_ context.Context, session *rvglutils.Session, opts ...rvglutils.UpdateSessionOpt) error {
+	return unixtable.NewEncoder(s.Writer).Encode(rvglutils.ScoreSession(session))
 }
 
 type sinkOpener struct{}

@@ -1,6 +1,7 @@
 package command
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,23 +14,49 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func updateSession(ctx context.Context, sink rvglutils.Sink, sessionCSV string, opts ...rvglutils.UpdateSessionOpt) error {
+	file, err := os.Open(sessionCSV)
+	if err != nil {
+		return fmt.Errorf("open %q: %w", sessionCSV, err)
+	}
+	defer file.Close()
+
+	session, err := rvglutils.DecodeSessionCSV(file)
+	if err != nil {
+		return fmt.Errorf("decode %q: %w", sessionCSV, err)
+	}
+
+	if len(session.Races) == 0 {
+		return nil
+	}
+
+	if err := file.Close(); err != nil {
+		return fmt.Errorf("close %q: %w", file.Name(), err)
+	}
+
+	if err = sink.UpdateSession(ctx, session, opts...); err != nil {
+		return fmt.Errorf("update session: %w", err)
+	}
+
+	return nil
+}
+
 // NewRVGLSM returns the command for `rvglsm`.
 func NewRVGLSM() *cobra.Command {
 	var (
 		resolveSessionCSVOpts = &rvglutils.ResolveSessionCSVOpts{}
-		scoreSessionOpts      = &rvglutils.ScoreSessionOpts{}
 		sinkURL               string
 		cmd                   = &cobra.Command{
 			Use:           "rvglsm",
 			SilenceErrors: true,
 			SilenceUsage:  true,
 			RunE: func(cmd *cobra.Command, args []string) error {
-				sessionCsv, err := rvglutils.ResolveSessionCSV(resolveSessionCSVOpts)
+				sessionCSV, err := rvglutils.ResolveSessionCSV(resolveSessionCSVOpts)
 				if err != nil {
 					return fmt.Errorf("resolve session .csv: %w", err)
 				}
 
-				_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "resolved session %q\n", sessionCsv)
+				_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "resolved session %q\n", sessionCSV)
 
 				var sink rvglutils.Sink = &stdout.Sink{Writer: cmd.OutOrStdout()}
 
@@ -48,64 +75,32 @@ func NewRVGLSM() *cobra.Command {
 				}
 				defer watcher.Close() //nolint:errcheck
 
-				if err := watcher.Add(filepath.Dir(sessionCsv)); err != nil {
-					return fmt.Errorf("watch %q: %w", sessionCsv, err)
+				if err := watcher.Add(filepath.Dir(sessionCSV)); err != nil {
+					return fmt.Errorf("watch %q: %w", sessionCSV, err)
 				}
 
-				_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "began watch on %q\n", sessionCsv)
+				_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "began watch on %q\n", sessionCSV)
 
 				go func() {
 					for err := range watcher.Errors {
-						_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "watch: %v\n", err)
+						_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "%v\n", err)
 					}
 				}()
 
 				go func() {
 					for event := range watcher.Events {
-						if event.Name == sessionCsv {
-							file, err := os.Open(sessionCsv)
-							if err != nil {
-								watcher.Errors <- fmt.Errorf("open %q: %w", sessionCsv, err)
-								continue
-							}
-
-							session, err := rvglutils.DecodeSessionCSV(file)
-							if err != nil {
-								watcher.Errors <- fmt.Errorf("decode %q: %w", sessionCsv, err)
-								continue
-							}
-
-							if err := file.Close(); err != nil {
-								watcher.Errors <- fmt.Errorf("close %q: %w", file.Name(), err)
-								continue
-							}
-
-							if err = sink.UpdateScore(cmd.Context(), session, rvglutils.ScoreSession(session, scoreSessionOpts)); err != nil {
-								watcher.Errors <- fmt.Errorf("update score: %w", err)
-								continue
+						if event.Name == sessionCSV {
+							if err := updateSession(cmd.Context(), sink, sessionCSV); err != nil {
+								watcher.Errors <- err
 							}
 						}
 					}
 				}()
 
-				file, err := os.Open(sessionCsv)
-				if err != nil {
-					watcher.Errors <- fmt.Errorf("open %q: %w", sessionCsv, err)
-				}
-				defer file.Close() //nolint:errcheck
-
-				session, err := rvglutils.DecodeSessionCSV(file)
-				if err != nil {
-					watcher.Errors <- fmt.Errorf("decode %q: %w", sessionCsv, err)
-				}
-
-				if err := file.Close(); err != nil {
+				if err := updateSession(cmd.Context(), sink, sessionCSV); err != nil {
 					return err
 				}
-
-				if err = sink.UpdateScore(cmd.Context(), session, rvglutils.ScoreSession(session, scoreSessionOpts)); err != nil {
-					watcher.Errors <- fmt.Errorf("update score: %w", err)
-				}
+				defer updateSession(cmd.Context(), sink, sessionCSV, &rvglutils.UpdateSessionOpts{Final: true}) //nolint:errcheck
 
 				<-cmd.Context().Done()
 				return cmd.Context().Err()
@@ -118,7 +113,6 @@ func NewRVGLSM() *cobra.Command {
 	cmd.SetVersionTemplate("{{ .Name }}{{ .Version }} " + runtime.Version() + "\n")
 
 	cmd.Flags().StringVarP(&sinkURL, "sink", "s", "", "URL of the sink to send scores to (e.g. discord://{token}@{channel_id})")
-	cmd.Flags().BoolVar(&scoreSessionOpts.IncludeAI, "include-ai", false, "Send AI scores to the sink")
 	cmd.Flags().StringVar(&resolveSessionCSVOpts.Name, "session", "", "Name of the session to resolve instead of using the latest one")
 
 	return cmd
