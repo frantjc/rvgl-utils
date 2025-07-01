@@ -109,7 +109,7 @@ func NewRVGLSM() *cobra.Command {
 	cmd.Flags().Bool("version", false, "Version for "+cmd.Name())
 	cmd.SetVersionTemplate("{{ .Name }}{{ .Version }} " + runtime.Version() + "\n")
 
-	cmd.Flags().StringVarP(&sinkURL, "sink", "s", "", "URL of the sink to send scores to (e.g. discord://{token}@{channel_id})")
+	cmd.Flags().StringVarP(&sinkURL, "sink", "s", "", "URL of the sink to send scores to (e.g. discord://{webhook_token}@{webhook_id}[/{message_id}])")
 	cmd.Flags().StringVar(&resolveSessionCSVOpts.Name, "session", "", "Name of the session to resolve instead of using the latest one")
 	cmd.Flags().BoolVar(&scoreSessionOpts.IncludeAI, "include-ai", false, "Score AI players")
 	cmd.Flags().CountVarP(&scoreSessionOpts.ExcludeRaces, "exclude", "x", "Number of races at the beginning of the session to exclude")

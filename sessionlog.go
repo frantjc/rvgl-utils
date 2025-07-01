@@ -44,11 +44,7 @@ const (
 
 func DataDir() (string, error) {
 	if dataDir := os.Getenv(EnvVarRVGLDataDir); dataDir != "" {
-		return dataDir, nil
-	}
-
-	if runtime.GOOS != "linux" {
-		return "", fmt.Errorf("unimplemented for %q, please set %q", runtime.GOOS, EnvVarRVGLDataDir)
+		return filepath.Abs(dataDir)
 	}
 
 	home, err := os.UserHomeDir()
@@ -56,7 +52,20 @@ func DataDir() (string, error) {
 		return "", err
 	}
 
-	return filepath.Join(home, ".var", "app", "org.rvgl.rvmm", "data", "rvmm"), nil
+	switch runtime.GOOS {
+	case "linux":
+		flatpakDataDir := filepath.Join(home, ".var", "app", "org.rvgl.rvmm", "data", "rvmm")
+
+		if _, err := os.Stat(flatpakDataDir); err == nil {
+			return flatpakDataDir, nil
+		}
+
+		return filepath.Join(home, ".local", "share", "RVGL"), nil
+	case "windows":
+		return filepath.Join(home, "AppData", "Roaming", "RVGL"), nil
+	}
+
+	return "", fmt.Errorf("data dir discovery unimplemented for %q, please set %q", runtime.GOOS, EnvVarRVGLDataDir)
 }
 
 func newResolveSessionCSVOpt(opts ...ResolveSessionCSVOpt) *ResolveSessionCSVOpts {

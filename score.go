@@ -15,11 +15,9 @@ func (o *ScoreSessionOpts) Apply(opts *ScoreSessionOpts) {
 	if o != nil {
 		if opts != nil {
 			opts.IncludeAI = o.IncludeAI
-
 			if o.ExcludeRaces > 0 {
 				opts.ExcludeRaces = o.ExcludeRaces
 			}
-
 			if o.Handicap != nil {
 				opts.Handicap = o.Handicap
 			}

@@ -15,7 +15,6 @@ func (o *UpdateSessionOpts) Apply(opts *UpdateSessionOpts) {
 	if o != nil {
 		if opts != nil {
 			o.Final = opts.Final
-
 			if o.ScoreSessionOpts != nil {
 				opts.ScoreSessionOpts = o.ScoreSessionOpts
 			}
