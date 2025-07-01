@@ -30,10 +30,6 @@ func updateSession(ctx context.Context, sink rvglutils.Sink, sessionCSV string, 
 		return nil
 	}
 
-	if err := file.Close(); err != nil {
-		return fmt.Errorf("close %q: %w", file.Name(), err)
-	}
-
 	if err = sink.UpdateSession(ctx, session, opts...); err != nil {
 		return fmt.Errorf("update session: %w", err)
 	}
@@ -45,6 +41,7 @@ func updateSession(ctx context.Context, sink rvglutils.Sink, sessionCSV string, 
 func NewRVGLSM() *cobra.Command {
 	var (
 		resolveSessionCSVOpts = &rvglutils.ResolveSessionCSVOpts{}
+		scoreSessionOpts      = &rvglutils.ScoreSessionOpts{}
 		sinkURL               string
 		cmd                   = &cobra.Command{
 			Use:           "rvglsm",
@@ -90,7 +87,7 @@ func NewRVGLSM() *cobra.Command {
 				go func() {
 					for event := range watcher.Events {
 						if event.Name == sessionCSV {
-							if err := updateSession(cmd.Context(), sink, sessionCSV); err != nil {
+							if err := updateSession(cmd.Context(), sink, sessionCSV, &rvglutils.UpdateSessionOpts{ScoreSessionOpts: scoreSessionOpts}); err != nil {
 								watcher.Errors <- err
 							}
 						}
@@ -100,7 +97,7 @@ func NewRVGLSM() *cobra.Command {
 				if err := updateSession(cmd.Context(), sink, sessionCSV); err != nil {
 					return err
 				}
-				defer updateSession(cmd.Context(), sink, sessionCSV, &rvglutils.UpdateSessionOpts{Final: true}) //nolint:errcheck
+				defer updateSession(context.WithoutCancel(cmd.Context()), sink, sessionCSV, &rvglutils.UpdateSessionOpts{Final: true, ScoreSessionOpts: scoreSessionOpts}) //nolint:errcheck
 
 				<-cmd.Context().Done()
 				return cmd.Context().Err()
@@ -114,6 +111,9 @@ func NewRVGLSM() *cobra.Command {
 
 	cmd.Flags().StringVarP(&sinkURL, "sink", "s", "", "URL of the sink to send scores to (e.g. discord://{token}@{channel_id})")
 	cmd.Flags().StringVar(&resolveSessionCSVOpts.Name, "session", "", "Name of the session to resolve instead of using the latest one")
+	cmd.Flags().BoolVar(&scoreSessionOpts.IncludeAI, "include-ai", false, "Score AI players")
+	cmd.Flags().CountVarP(&scoreSessionOpts.ExcludeRaces, "exclude", "x", "Number of races at the beginning of the session to exclude")
+	cmd.Flags().StringToIntVarP(&scoreSessionOpts.Handicap, "handicap", "H", nil, "Handicap to apply")
 
 	return cmd
 }

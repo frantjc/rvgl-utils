@@ -25,7 +25,13 @@ type Sink struct {
 }
 
 func (s *Sink) UpdateSession(_ context.Context, session *rvglutils.Session, opts ...rvglutils.UpdateSessionOpt) error {
-	return unixtable.NewEncoder(s.Writer).Encode(rvglutils.ScoreSession(session))
+	o := new(rvglutils.UpdateSessionOpts)
+
+	for _, opt := range opts {
+		opt.Apply(o)
+	}
+
+	return unixtable.NewEncoder(s.Writer).Encode(rvglutils.ScoreSession(session, o.ScoreSessionOpts))
 }
 
 type sinkOpener struct{}

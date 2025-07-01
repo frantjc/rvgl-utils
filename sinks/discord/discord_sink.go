@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -23,11 +22,10 @@ const (
 )
 
 type Sink struct {
-	ChannelID        string
-	Token            string
-	MessageID        string
-	ScoreSessionOpts *rvglutils.ScoreSessionOpts
-	HTTPClient       *http.Client
+	ChannelID  string
+	Token      string
+	MessageID  string
+	HTTPClient *http.Client
 }
 
 func (s *Sink) UpdateSession(ctx context.Context, session *rvglutils.Session, opts ...rvglutils.UpdateSessionOpt) error {
@@ -44,7 +42,7 @@ func (s *Sink) UpdateSession(ctx context.Context, session *rvglutils.Session, op
 		return err
 	}
 
-	scores := rvglutils.ScoreSession(session, s.ScoreSessionOpts)
+	scores := rvglutils.ScoreSession(session, o.ScoreSessionOpts)
 
 	for i, score := range scores {
 		format := "%s: %d\n"
@@ -131,25 +129,10 @@ func (o *sinkOpener) Open(ctx context.Context, u *url.URL) (rvglutils.Sink, erro
 	}
 
 	var (
-		includeAI bool
-		err       error
-	)
-
-	if rawIncludeAI := u.Query().Get("include-ai"); rawIncludeAI != "" {
-		includeAI, err = strconv.ParseBool(rawIncludeAI)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	var (
 		s = &Sink{
 			ChannelID: u.Host,
 			MessageID: strings.TrimPrefix(u.Path, "/"),
 			Token:     u.User.Username(),
-			ScoreSessionOpts: &rvglutils.ScoreSessionOpts{
-				IncludeAI: includeAI,
-			},
 		}
 	)
 

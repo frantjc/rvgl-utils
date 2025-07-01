@@ -6,13 +6,23 @@ import (
 )
 
 type ScoreSessionOpts struct {
-	IncludeAI bool
+	IncludeAI    bool
+	ExcludeRaces int
+	Handicap     map[string]int
 }
 
 func (o *ScoreSessionOpts) Apply(opts *ScoreSessionOpts) {
 	if o != nil {
 		if opts != nil {
-			o.IncludeAI = opts.IncludeAI
+			opts.IncludeAI = o.IncludeAI
+
+			if o.ExcludeRaces > 0 {
+				opts.ExcludeRaces = o.ExcludeRaces
+			}
+
+			if o.Handicap != nil {
+				opts.Handicap = o.Handicap
+			}
 		}
 	}
 }
@@ -45,8 +55,11 @@ func ScoreSession(session *Session, opts ...ScoreSessionOpt) []Score {
 		o   = newScoreSessionOpts(opts...)
 		tmp = make(map[string]int)
 	)
+	for k, v := range o.Handicap {
+		tmp[k] = v
+	}
 
-	for _, race := range session.Races {
+	for _, race := range session.Races[o.ExcludeRaces:] {
 		players := len(race.Results)
 
 		for _, result := range race.Results {

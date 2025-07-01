@@ -7,13 +7,18 @@ import (
 )
 
 type UpdateSessionOpts struct {
-	Final bool
+	Final            bool
+	ScoreSessionOpts *ScoreSessionOpts
 }
 
 func (o *UpdateSessionOpts) Apply(opts *UpdateSessionOpts) {
 	if o != nil {
 		if opts != nil {
 			o.Final = opts.Final
+
+			if o.ScoreSessionOpts != nil {
+				opts.ScoreSessionOpts = o.ScoreSessionOpts
+			}
 		}
 	}
 }
