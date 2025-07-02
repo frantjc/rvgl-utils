@@ -19,7 +19,7 @@ func updateSession(ctx context.Context, sink rvglutils.Sink, sessionCSV string, 
 	if err != nil {
 		return fmt.Errorf("open %q: %w", sessionCSV, err)
 	}
-	defer file.Close()
+	defer file.Close() //nolint:errcheck
 
 	session, err := rvglutils.DecodeSessionCSV(file)
 	if err != nil {
