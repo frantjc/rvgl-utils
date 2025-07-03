@@ -23,7 +23,9 @@ changelog:
       - Merge remote-tracking branch
       - Merge branch
 archives:
-  - format: binary
+  - format_overrides:
+    - goos: windows
+      format: zip
 brews:
   - repository:
       owner: frantjc
