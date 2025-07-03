@@ -22,6 +22,8 @@ changelog:
       - Merge pull request
       - Merge remote-tracking branch
       - Merge branch
+archives:
+  - format: binary
 brews:
   - repository:
       owner: frantjc
