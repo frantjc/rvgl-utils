@@ -24,6 +24,7 @@ type Sink struct {
 	io.Writer
 }
 
+// UpdateSession implements rvglutils.Sink.
 func (s *Sink) UpdateSession(_ context.Context, session *rvglutils.Session, opts ...rvglutils.UpdateSessionOpt) error {
 	o := new(rvglutils.UpdateSessionOpts)
 
@@ -36,6 +37,7 @@ func (s *Sink) UpdateSession(_ context.Context, session *rvglutils.Session, opts
 
 type sinkOpener struct{}
 
+// Open implements rvglutils.SinkOpener.
 func (o *sinkOpener) Open(ctx context.Context, u *url.URL) (rvglutils.Sink, error) {
 	if u.Scheme != Scheme {
 		return nil, fmt.Errorf("invalid scheme %s, expected %s", u.Scheme, Scheme)

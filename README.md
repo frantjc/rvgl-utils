@@ -45,7 +45,7 @@ This will watch for updates to the session from RVGL and write them to the "sink
 `rvglsm` can write updates to different destinations. As of writing, Discord is the only additional supported sink:
 
 ```sh
-rvglsm --sink discord://{webhook_token}@{webhook_id}
+rvglsm --sink {webhook_url}
 ```
 
-Where `{webhook_token}` is the last path parameter in the Webhook URL and `{webhook_id}` is the second to last.
+Where `{webhook_url}` is a Discord webhook URL like `https://discordapp.com/api/webhooks/{webhook_id}/{webhook_token}[/messages/{message_id}]`.

@@ -22,12 +22,13 @@ const (
 )
 
 type Sink struct {
-	ChannelID  string
+	WebhookID  string
 	Token      string
 	MessageID  string
 	HTTPClient *http.Client
 }
 
+// UpdateSession implements rvglutils.Sink.
 func (s *Sink) UpdateSession(ctx context.Context, session *rvglutils.Session, opts ...rvglutils.UpdateSessionOpt) error {
 	var (
 		o       = new(rvglutils.UpdateSessionOpts)
@@ -56,7 +57,7 @@ func (s *Sink) UpdateSession(ctx context.Context, session *rvglutils.Session, op
 		}
 	}
 
-	u, err := url.Parse(fmt.Sprintf("https://discordapp.com/api/webhooks/%s/%s", s.ChannelID, s.Token))
+	u, err := url.Parse(fmt.Sprintf("https://discordapp.com/api/webhooks/%s/%s", s.WebhookID, s.Token))
 	if err != nil {
 		return err
 	}
@@ -123,6 +124,7 @@ func (s *Sink) UpdateSession(ctx context.Context, session *rvglutils.Session, op
 
 type sinkOpener struct{}
 
+// Open implements rvglutils.SinkOpener.
 func (o *sinkOpener) Open(ctx context.Context, u *url.URL) (rvglutils.Sink, error) {
 	if u.Scheme != Scheme {
 		return nil, fmt.Errorf("invalid scheme %q, expected %q", u.Scheme, Scheme)
@@ -130,7 +132,7 @@ func (o *sinkOpener) Open(ctx context.Context, u *url.URL) (rvglutils.Sink, erro
 
 	var (
 		s = &Sink{
-			ChannelID: u.Host,
+			WebhookID: u.Host,
 			MessageID: strings.TrimPrefix(u.Path, "/"),
 			Token:     u.User.Username(),
 		}

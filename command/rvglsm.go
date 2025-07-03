@@ -3,11 +3,14 @@ package command
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 
 	rvglutils "github.com/frantjc/rvgl-utils"
+	"github.com/frantjc/rvgl-utils/sinks/discord"
 	_ "github.com/frantjc/rvgl-utils/sinks/discord"
 	"github.com/frantjc/rvgl-utils/sinks/stdout"
 	"github.com/fsnotify/fsnotify"
@@ -35,6 +38,45 @@ func updateSession(ctx context.Context, sink rvglutils.Sink, sessionCSV string, 
 	}
 
 	return nil
+}
+
+func init() {
+	rvglutils.RegisterSink(&httpSinkOpener{}, "http", "https")
+}
+
+type httpSinkOpener struct{}
+
+// Open implements rvglutils.SinkOpener.
+func (h *httpSinkOpener) Open(ctx context.Context, u *url.URL) (rvglutils.Sink, error) {
+	switch u.Scheme {
+	case "http", "https":
+	default:
+		return nil, fmt.Errorf(`invalid scheme %q, expected "http" or "https"`, u.Scheme)
+	}
+
+	switch u.Hostname() {
+	case "discordapp.com":
+	default:
+		return nil, fmt.Errorf(`invalid host %q, expected "discordapp.com"`, u.Hostname())
+	}
+
+	var (
+		matches   = regexp.MustCompile(`^/api/webhooks/([^/]+)/([^/]+)(?:/messages/([^/]+))?$`).FindStringSubmatch(u.Path)
+		messageID string
+	)
+	switch len(matches) {
+	case 4:
+		messageID = matches[3]
+	case 3:
+	default:
+		return nil, fmt.Errorf("invalid discord webhook URL path: %q", u.Path)
+	}
+
+	return &discord.Sink{
+		WebhookID: matches[1],
+		Token:     matches[2],
+		MessageID: messageID,
+	}, nil
 }
 
 // NewRVGLSM returns the command for `rvglsm`.
@@ -109,7 +151,7 @@ func NewRVGLSM() *cobra.Command {
 	cmd.Flags().Bool("version", false, "Version for "+cmd.Name())
 	cmd.SetVersionTemplate("{{ .Name }}{{ .Version }} " + runtime.Version() + "\n")
 
-	cmd.Flags().StringVarP(&sinkURL, "sink", "s", "", "URL of the sink to send scores to (e.g. discord://{webhook_token}@{webhook_id}[/{message_id}])")
+	cmd.Flags().StringVarP(&sinkURL, "sink", "s", "", "URL of the sink to send updates to (e.g. a Discord webhook URL")
 	cmd.Flags().StringVar(&resolveSessionCSVOpts.Name, "session", "", "Name of the session to resolve instead of using the latest one")
 	cmd.Flags().BoolVar(&scoreSessionOpts.IncludeAI, "include-ai", false, "Score AI players")
 	cmd.Flags().CountVarP(&scoreSessionOpts.ExcludeRaces, "exclude", "x", "Number of races at the beginning of the session to exclude")
