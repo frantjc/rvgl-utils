@@ -25,17 +25,17 @@ changelog:
 archives:
   - format_overrides:
     - goos: windows
-      format: zip
-brews:
+      formats: zip
+homebrew_casks:
   - repository:
       owner: frantjc
       name: homebrew-tap
     name: rvglsm
-    directory: Formula
-    skip_upload: auto
-    homepage:  https://github.com/frantjc/rvgl-utils
-    license: MIT
-    install: |
-      bin.install "rvglsm"
-    test: |
-      system "#{bin}/rvglsm --version"
+    conflicts:
+      - formula: rvglsm
+    hooks:
+      post:
+        install: |
+          if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/rvglsm"]
+          end
