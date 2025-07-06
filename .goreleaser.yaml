@@ -10,9 +10,6 @@ builds:
       - darwin
     goarch:
       - amd64
-    hooks:
-      post:
-        - upx {{ .Path }}
 upx:
   - enabled: true
     goos:
