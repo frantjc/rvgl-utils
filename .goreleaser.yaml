@@ -13,6 +13,11 @@ builds:
     hooks:
       post:
         - upx {{ .Path }}
+upx:
+  - enabled: true
+    goos:
+      - linux
+      - windows
 release:
   prerelease: auto
 changelog:
