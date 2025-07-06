@@ -28,7 +28,7 @@ func TestResolveSessionCSVByTime(t *testing.T) {
 	}
 
 	name, err := rvglutils.ResolveSessionCSV(&rvglutils.ResolveSessionCSVOpts{
-		Path: tmp,
+		PathList: tmp,
 	})
 	if err != nil {
 		t.Fatalf("resolve %q from %q: %v", baseName, tmp, err)
@@ -59,8 +59,8 @@ func TestResolveSessionCSVByName(t *testing.T) {
 	}
 
 	name, err := rvglutils.ResolveSessionCSV(&rvglutils.ResolveSessionCSVOpts{
-		Name: baseName,
-		Path: tmp,
+		Name:     baseName,
+		PathList: tmp,
 	})
 	if err != nil {
 		t.Fatalf("resolve %q from %q: %v", baseName, tmp, err)

@@ -11,7 +11,6 @@ import (
 
 	rvglutils "github.com/frantjc/rvgl-utils"
 	"github.com/frantjc/rvgl-utils/sinks/discord"
-	_ "github.com/frantjc/rvgl-utils/sinks/discord"
 	"github.com/frantjc/rvgl-utils/sinks/stdout"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
@@ -82,6 +81,7 @@ func (h *httpSinkOpener) Open(ctx context.Context, u *url.URL) (rvglutils.Sink, 
 // NewRVGLSM returns the command for `rvglsm`.
 func NewRVGLSM() *cobra.Command {
 	var (
+		prefPath              string
 		resolveSessionCSVOpts = &rvglutils.ResolveSessionCSVOpts{}
 		scoreSessionOpts      = &rvglutils.ScoreSessionOpts{}
 		sinkURL               string
@@ -92,15 +92,22 @@ func NewRVGLSM() *cobra.Command {
 			RunE: func(cmd *cobra.Command, args []string) error {
 				sessionCSV, err := rvglutils.ResolveSessionCSV(resolveSessionCSVOpts)
 				if err != nil {
-					return fmt.Errorf("resolve session .csv: %w", err)
+					return err
+				}
+
+				if prefPath != "" {
+					resolveSessionCSVOpts.PathList = filepath.Join(prefPath, "profiles")
 				}
 
 				_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "resolved session %q\n", sessionCSV)
 
-				var sink rvglutils.Sink = &stdout.Sink{Writer: cmd.OutOrStdout()}
+				var (
+					ctx                 = cmd.Context()
+					sink rvglutils.Sink = &stdout.Sink{Writer: cmd.OutOrStdout()}
+				)
 
 				if sinkURL != "" {
-					sink, err = rvglutils.OpenSink(cmd.Context(), sinkURL)
+					sink, err = rvglutils.OpenSink(ctx, sinkURL)
 					if err != nil {
 						return fmt.Errorf("open sink: %w", err)
 					}
@@ -129,20 +136,20 @@ func NewRVGLSM() *cobra.Command {
 				go func() {
 					for event := range watcher.Events {
 						if event.Name == sessionCSV {
-							if err := updateSession(cmd.Context(), sink, sessionCSV, &rvglutils.UpdateSessionOpts{ScoreSessionOpts: scoreSessionOpts}); err != nil {
+							if err := updateSession(ctx, sink, sessionCSV, &rvglutils.UpdateSessionOpts{ScoreSessionOpts: scoreSessionOpts}); err != nil {
 								watcher.Errors <- err
 							}
 						}
 					}
 				}()
 
-				if err := updateSession(cmd.Context(), sink, sessionCSV); err != nil {
+				if err := updateSession(ctx, sink, sessionCSV); err != nil {
 					return err
 				}
-				defer updateSession(context.WithoutCancel(cmd.Context()), sink, sessionCSV, &rvglutils.UpdateSessionOpts{Final: true, ScoreSessionOpts: scoreSessionOpts}) //nolint:errcheck
+				defer updateSession(context.WithoutCancel(ctx), sink, sessionCSV, &rvglutils.UpdateSessionOpts{Final: true, ScoreSessionOpts: scoreSessionOpts}) //nolint:errcheck
 
-				<-cmd.Context().Done()
-				return cmd.Context().Err()
+				<-ctx.Done()
+				return ctx.Err()
 			},
 		}
 	)
@@ -151,11 +158,12 @@ func NewRVGLSM() *cobra.Command {
 	cmd.Flags().Bool("version", false, "Version for "+cmd.Name())
 	cmd.SetVersionTemplate("{{ .Name }}{{ .Version }} " + runtime.Version() + "\n")
 
-	cmd.Flags().StringVarP(&sinkURL, "sink", "s", "", "URL of the sink to send updates to (e.g. a Discord webhook URL")
+	cmd.Flags().StringVarP(&sinkURL, "sink", "s", "", "URL of the sink to send updates to (e.g. a Discord webhook URL)")
 	cmd.Flags().StringVar(&resolveSessionCSVOpts.Name, "session", "", "Name of the session to resolve instead of using the latest one")
 	cmd.Flags().BoolVar(&scoreSessionOpts.IncludeAI, "include-ai", false, "Score AI players")
 	cmd.Flags().CountVarP(&scoreSessionOpts.ExcludeRaces, "exclude", "x", "Number of races at the beginning of the session to exclude")
 	cmd.Flags().StringToIntVarP(&scoreSessionOpts.Handicap, "handicap", "H", nil, "Handicap to apply")
+	cmd.Flags().StringVar(&prefPath, "prefpath", "", "RVGL -prefpath to search for the session in")
 
 	return cmd
 }

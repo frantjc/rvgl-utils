@@ -6,16 +6,17 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
+
+	xslices "github.com/frantjc/x/slices"
 )
 
 type ResolveSessionCSVOpts struct {
-	Time time.Time
-	Name string
-	Path string
+	Time     time.Time
+	Name     string
+	PathList string
 }
 
 func (o *ResolveSessionCSVOpts) Apply(opts *ResolveSessionCSVOpts) {
@@ -27,8 +28,8 @@ func (o *ResolveSessionCSVOpts) Apply(opts *ResolveSessionCSVOpts) {
 			if o.Name != "" {
 				opts.Name = o.Name
 			}
-			if o.Path != "" {
-				opts.Path = o.Path
+			if o.PathList != "" {
+				opts.PathList = o.PathList
 			}
 		}
 	}
@@ -38,49 +39,16 @@ type ResolveSessionCSVOpt interface {
 	Apply(*ResolveSessionCSVOpts)
 }
 
-const (
-	EnvVarRVGLDataDir = "RVGL_DATA_DIR"
-)
-
-func DataDir() (string, error) {
-	if dataDir := os.Getenv(EnvVarRVGLDataDir); dataDir != "" {
-		return filepath.Abs(dataDir)
-	}
-
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-
-	switch runtime.GOOS {
-	case "linux":
-		flatpakDataDir := filepath.Join(home, ".var", "app", "org.rvgl.rvmm", "data", "rvmm")
-
-		if _, err := os.Stat(flatpakDataDir); err == nil {
-			return flatpakDataDir, nil
-		}
-
-		return filepath.Join(home, ".local", "share", "RVGL"), nil
-	case "windows":
-		return filepath.Join(home, "AppData", "Roaming", "RVGL"), nil
-	}
-
-	return "", fmt.Errorf("data dir discovery unimplemented for %q, please set %q", runtime.GOOS, EnvVarRVGLDataDir)
-}
-
 func newResolveSessionCSVOpt(opts ...ResolveSessionCSVOpt) *ResolveSessionCSVOpts {
 	o := &ResolveSessionCSVOpts{
 		Time: time.Now(),
+		PathList: strings.Join(xslices.Map(strings.Split(DefaultPrefPathList, string(os.PathListSeparator)), func(prefPath string, _ int) string {
+			return filepath.Join(prefPath, "profiles")
+		}), string(os.PathListSeparator)),
 	}
 
 	for _, opt := range opts {
 		opt.Apply(o)
-	}
-
-	if o.Path == "" {
-		if dataDir, err := DataDir(); err == nil {
-			o.Path = filepath.Join(dataDir, "save", "profiles")
-		}
 	}
 
 	return o
@@ -95,32 +63,25 @@ func ResolveSessionCSV(opts ...ResolveSessionCSVOpt) (string, error) {
 		}
 	}
 
+	dirs := strings.Split(o.PathList, string(os.PathListSeparator))
+
 	cwd, err := os.Getwd()
-	if err != nil {
-		return "", err
+	if err == nil {
+		dirs = append(dirs, cwd)
 	}
 
-	dirs := []string{cwd}
-
-	if o.Path != "" {
-		parts := strings.Split(o.Path, string(os.PathListSeparator))
-		for _, p := range parts {
-			if p != "" {
-				dirs = append(dirs, p)
-			}
-		}
-	}
-
-	// If Name is set, search for it on Path.
+	// If Name is set, search for it on PathList.
 	if o.Name != "" {
 		for _, dir := range dirs {
-			name := filepath.Join(dir, o.Name)
-			if _, err := os.Stat(name); err == nil {
-				return name, nil
+			if dir != "" {
+				name := filepath.Join(dir, o.Name)
+				if _, err := os.Stat(name); err == nil {
+					return name, nil
+				}
 			}
 		}
 
-		return "", fmt.Errorf("%q not found on path %q", o.Name, o.Path)
+		return "", fmt.Errorf("find %q on path %q", o.Name, o.PathList)
 	}
 
 	var (
@@ -128,6 +89,10 @@ func ResolveSessionCSV(opts ...ResolveSessionCSVOpt) (string, error) {
 		candidateDiff time.Duration = 1<<63 - 1 // Max duration.
 	)
 	for _, dir := range dirs {
+		if dir == "" {
+			continue
+		}
+
 		entries, err := os.ReadDir(dir)
 		if err != nil {
 			continue
@@ -168,7 +133,7 @@ func ResolveSessionCSV(opts ...ResolveSessionCSVOpt) (string, error) {
 		return candidateName, nil
 	}
 
-	return "", fmt.Errorf("not implemented")
+	return "", fmt.Errorf("resolve session .csv")
 }
 
 type Session struct {
