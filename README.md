@@ -49,3 +49,30 @@ rvglsm --sink {webhook_url}
 ```
 
 Where `{webhook_url}` is a Discord webhook URL like `https://discordapp.com/api/webhooks/{webhook_id}/{webhook_token}[/messages/{message_id}]`.
+
+If you use a custom `-prefpath` with `rvgl`, you'll have to tell `rvglsm` about it, too:
+
+```sh
+rvglsm --prefpath {-prefpath}
+```
+
+For a full list of available flags:
+
+```sh
+rvglsm --help
+```
+
+```
+Usage:
+  rvglsm [flags]
+
+Flags:
+  -x, --exclude count          Number of races at the beginning of the session to exclude
+  -H, --handicap stringToInt   Handicap to apply (default [])
+  -h, --help                   Help for rvglsm
+      --include-ai             Score AI players
+      --prefpath string        RVGL -prefpath to search for the session in
+      --session string         Name of the session to resolve instead of using the latest one
+  -s, --sink string            URL of the sink to send updates to (e.g. a Discord webhook URL)
+      --version                Version for rvglsm
+```
