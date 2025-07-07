@@ -80,7 +80,13 @@ func TestScoreSessionExcludeOutOfBounds(t *testing.T) {
 		t.Fatalf("decode testdata/session.csv: %v", err)
 	}
 
-	rvglutils.ScoreSession(session, &rvglutils.ScoreSessionOpts{ExcludeRaces: 9})
+	scores := rvglutils.ScoreSession(session, &rvglutils.ScoreSessionOpts{ExcludeRaces: 9})
+
+	for _, score := range scores {
+		if score.Points > 0 {
+			t.Fatal("races not excluded from score")
+		}
+	}
 }
 
 func TestScoreSessionHandicap(t *testing.T) {
