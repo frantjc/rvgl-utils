@@ -25,7 +25,7 @@ func TestScoreSession(t *testing.T) {
 
 	for i, score := range scores {
 		if i < lenScores-1 && score.Points < scores[i+1].Points {
-			t.Fatal("scores not sorted by points")
+			t.Fatal("scores not sorted by points descending")
 		}
 	}
 }
@@ -66,7 +66,7 @@ func TestScoreSessionExclude(t *testing.T) {
 	}
 
 	if scores[0].Player != "FRANTJC" {
-		t.Fatal("unexpected player in 1st:", scores[0].Player)
+		t.Fatalf("unexpected player in 1st: %s", scores[0].Player)
 	}
 
 	if scores[0].Points != 36 {
