@@ -34,6 +34,8 @@ homebrew_casks:
       owner: frantjc
       name: homebrew-tap
     name: rvglsm
+    homepage: https://github.com/frantjc/rvgl-utils
+    description: Track RVGL session scores.
     conflicts:
       - formula: rvglsm
     hooks:
