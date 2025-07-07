@@ -45,14 +45,21 @@ func newScoreSessionOpts(opts ...ScoreSessionOpt) *ScoreSessionOpts {
 }
 
 func ScoreSession(session *Session, opts ...ScoreSessionOpt) []Score {
-	if session == nil {
+	if session == nil || len(session.Races) == 0 {
 		return []Score{}
 	}
 
 	var (
-		o   = newScoreSessionOpts(opts...)
-		tmp = make(map[string]int)
+		o        = newScoreSessionOpts(opts...)
+		tmp      = make(map[string]int)
+		lenRaces = len(session.Races)
 	)
+	if o.ExcludeRaces > lenRaces {
+		o.ExcludeRaces = lenRaces
+	} else if o.ExcludeRaces < 0 {
+		o.ExcludeRaces = 0
+	}
+
 	for k, v := range o.Handicap {
 		tmp[k] = v
 	}

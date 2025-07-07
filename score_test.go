@@ -74,6 +74,15 @@ func TestScoreSessionExclude(t *testing.T) {
 	}
 }
 
+func TestScoreSessionExcludeOutOfBounds(t *testing.T) {
+	session, err := rvglutils.DecodeSessionCSV(bytes.NewReader(testdata.SessionCSV))
+	if err != nil {
+		t.Fatalf("decode testdata/session.csv: %v", err)
+	}
+
+	rvglutils.ScoreSession(session, &rvglutils.ScoreSessionOpts{ExcludeRaces: 9})
+}
+
 func TestScoreSessionHandicap(t *testing.T) {
 	session, err := rvglutils.DecodeSessionCSV(bytes.NewReader(testdata.SessionCSV))
 	if err != nil {
