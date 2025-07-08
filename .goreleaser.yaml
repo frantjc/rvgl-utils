@@ -10,11 +10,33 @@ builds:
       - darwin
     goarch:
       - amd64
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -trimpath
 upx:
   - enabled: true
     goos:
       - linux
       - windows
+checksum:
+  name_template: checksums.txt
+source:
+  enabled: true
+sboms:
+  - artifacts: archive
+  - id: source
+    artifacts: source
+signs:
+  - cmd: cosign
+    certificate: "${artifact}.pem"
+    args:
+      - sign-blob
+      - --output-certificate=${certificate}
+      - --output-signature=${signature}
+      - ${artifact}
+      - --yes
+    artifacts: checksum
+    output: true
 release:
   prerelease: auto
 changelog:
@@ -27,8 +49,8 @@ changelog:
       - Merge branch
 archives:
   - format_overrides:
-    - goos: windows
-      formats: zip
+      - goos: windows
+        formats: zip
 homebrew_casks:
   - repository:
       owner: frantjc
