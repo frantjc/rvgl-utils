@@ -143,7 +143,7 @@ func NewRVGLSM() *cobra.Command {
 					}
 				}()
 
-				if err := updateSession(ctx, sink, sessionCSV); err != nil {
+				if err := updateSession(ctx, sink, sessionCSV, &rvglutils.UpdateSessionOpts{ScoreSessionOpts: scoreSessionOpts}); err != nil {
 					return err
 				}
 				defer updateSession(context.WithoutCancel(ctx), sink, sessionCSV, &rvglutils.UpdateSessionOpts{Final: true, ScoreSessionOpts: scoreSessionOpts}) //nolint:errcheck
