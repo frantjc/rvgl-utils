@@ -84,12 +84,63 @@ func NewRVGLSM() *cobra.Command {
 		prefPath              string
 		resolveSessionCSVOpts = &rvglutils.ResolveSessionCSVOpts{}
 		scoreSessionOpts      = &rvglutils.ScoreSessionOpts{}
+		laps                  int
 		sinkURL               string
 		cmd                   = &cobra.Command{
 			Use:           "rvglsm",
 			SilenceErrors: true,
 			SilenceUsage:  true,
 			RunE: func(cmd *cobra.Command, args []string) error {
+				if laps > 0 {
+					resolvSettingsINIOpts := &rvglutils.ResolveSettingsINIOpts{PathList: resolveSessionCSVOpts.PathList}
+
+					rvglINI, err := rvglutils.ResolveSettingsINI(resolvSettingsINIOpts)
+					if err != nil {
+						return err
+					}
+
+					settingsFile, err := os.Open(rvglINI)
+					if err != nil {
+						return err
+					}
+					defer settingsFile.Close()
+
+					settings, err := rvglutils.DecodeSettingsINI(settingsFile)
+					if err != nil {
+						return err
+					}
+
+					profileINI, err := rvglutils.ResolveSettingsINI(resolvSettingsINIOpts, &rvglutils.ResolveSettingsINIOpts{Profile: settings.Misc.DefaultProfile})
+					if err != nil {
+						return err
+					}
+
+					profileSettingsFile, err := os.Open(profileINI)
+					if err != nil {
+						return err
+					}
+					defer profileSettingsFile.Close()
+
+					profileSettings, err := rvglutils.DecodeProfileSettingsINI(profileSettingsFile)
+					if err != nil {
+						return err
+					}
+
+					tmpProfileSettingsFile, err := os.Create(fmt.Sprintf("%s.tmp", profileSettingsFile.Name()))
+					if err != nil {
+						return err
+					}
+					defer tmpProfileSettingsFile.Close()
+
+					profileSettings.Game.NLaps = laps
+
+					if err := rvglutils.EncodeSettingsINI(tmpProfileSettingsFile, profileSettings); err != nil {
+						return err
+					}
+
+					return os.Rename(tmpProfileSettingsFile.Name(), profileSettingsFile.Name())
+				}
+
 				sessionCSV, err := rvglutils.ResolveSessionCSV(resolveSessionCSVOpts)
 				if err != nil {
 					return err
@@ -164,6 +215,8 @@ func NewRVGLSM() *cobra.Command {
 	cmd.Flags().CountVarP(&scoreSessionOpts.ExcludeRaces, "exclude", "x", "Number of races at the beginning of the session to exclude")
 	cmd.Flags().StringToIntVarP(&scoreSessionOpts.Handicap, "handicap", "H", nil, "Handicap to apply")
 	cmd.Flags().StringVar(&prefPath, "prefpath", "", "RVGL -prefpath to search for the session in")
+
+	cmd.Flags().IntVar(&laps, "laps", 0, "Set NLaps in default profile.ini and exit")
 
 	return cmd
 }

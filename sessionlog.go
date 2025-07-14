@@ -39,7 +39,7 @@ type ResolveSessionCSVOpt interface {
 	Apply(*ResolveSessionCSVOpts)
 }
 
-func newResolveSessionCSVOpt(opts ...ResolveSessionCSVOpt) *ResolveSessionCSVOpts {
+func newResolveSessionCSVOpts(opts ...ResolveSessionCSVOpt) *ResolveSessionCSVOpts {
 	o := &ResolveSessionCSVOpts{
 		Time: time.Now(),
 		PathList: strings.Join(xslices.Map(strings.Split(DefaultPrefPathList, string(os.PathListSeparator)), func(prefPath string, _ int) string {
@@ -55,7 +55,7 @@ func newResolveSessionCSVOpt(opts ...ResolveSessionCSVOpt) *ResolveSessionCSVOpt
 }
 
 func ResolveSessionCSV(opts ...ResolveSessionCSVOpt) (string, error) {
-	o := newResolveSessionCSVOpt(opts...)
+	o := newResolveSessionCSVOpts(opts...)
 
 	if o.Name != "" {
 		if filepath.IsAbs(o.Name) {
