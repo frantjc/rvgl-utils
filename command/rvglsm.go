@@ -103,7 +103,7 @@ func NewRVGLSM() *cobra.Command {
 					if err != nil {
 						return err
 					}
-					defer settingsFile.Close()
+					defer settingsFile.Close() //nolint:errcheck
 
 					settings, err := rvglutils.DecodeSettingsINI(settingsFile)
 					if err != nil {
@@ -119,7 +119,7 @@ func NewRVGLSM() *cobra.Command {
 					if err != nil {
 						return err
 					}
-					defer profileSettingsFile.Close()
+					defer profileSettingsFile.Close() //nolint:errcheck
 
 					profileSettings, err := rvglutils.DecodeProfileSettingsINI(profileSettingsFile)
 					if err != nil {
@@ -130,7 +130,7 @@ func NewRVGLSM() *cobra.Command {
 					if err != nil {
 						return err
 					}
-					defer tmpProfileSettingsFile.Close()
+					defer tmpProfileSettingsFile.Close() //nolint:errcheck
 
 					profileSettings.Game.NLaps = laps
 
