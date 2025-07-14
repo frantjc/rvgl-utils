@@ -71,6 +71,7 @@ Flags:
   -H, --handicap stringToInt   Handicap to apply (default [])
   -h, --help                   Help for rvglsm
       --include-ai             Score AI players
+      --laps int               Set NLaps in default profile.ini and exit
       --prefpath string        RVGL -prefpath to search for the session in
       --session string         Name of the session to resolve instead of using the latest one
   -s, --sink string            URL of the sink to send updates to (e.g. a Discord webhook URL)
