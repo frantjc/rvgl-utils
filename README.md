@@ -9,13 +9,13 @@ From a [release](https://github.com/frantjc/rvgl-utils/releases).
 Using `brew`:
 
 ```sh
-brew install frantjc/tap/forge
+brew install --cask frantjc/tap/rvglsm
 ```
 
 Using `go`:
 
 ```sh
-go install github.com/frantjc/forge/cmd/forge
+go install github.com/frantjc/rvgl-utils/cmd/rvglsm
 ```
 
 From source:
