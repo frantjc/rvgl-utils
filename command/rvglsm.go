@@ -28,10 +28,6 @@ func updateSession(ctx context.Context, sink rvglutils.Sink, sessionCSV string, 
 		return fmt.Errorf("decode %q: %w", sessionCSV, err)
 	}
 
-	if len(session.Races) == 0 {
-		return nil
-	}
-
 	if err = sink.UpdateSession(ctx, session, opts...); err != nil {
 		return fmt.Errorf("update session: %w", err)
 	}
@@ -212,6 +208,8 @@ func NewRVGLSM() *cobra.Command {
 	cmd.Flags().StringVarP(&sinkURL, "sink", "s", "", "URL of the sink to send updates to (e.g. a Discord webhook URL)")
 	cmd.Flags().StringVar(&resolveSessionCSVOpts.Name, "session", "", "Name of the session to resolve instead of using the latest one")
 	cmd.Flags().BoolVar(&scoreSessionOpts.IncludeAI, "include-ai", false, "Score AI players")
+	cmd.Flags().IntVar(&scoreSessionOpts.Interval, "interval", 0, "Interval at which to reset points")
+	cmd.Flags().IntVar(&scoreSessionOpts.ExtraPointsPerRace, "extra-pts-per-race", 0, "Extra points to award per race")
 	cmd.Flags().CountVarP(&scoreSessionOpts.ExcludeRaces, "exclude", "x", "Number of races at the beginning of the session to exclude")
 	cmd.Flags().StringToIntVarP(&scoreSessionOpts.Handicap, "handicap", "H", nil, "Handicap to apply")
 	cmd.Flags().StringVar(&prefPath, "prefpath", "", "RVGL -prefpath to search for the session in")

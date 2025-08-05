@@ -44,8 +44,8 @@ Results,"Downhill Jam (THUG2)",12
 12,"Sucker Punch","Sucker Punch","00:54:015","05:00:000","false","false"
 Results,"Downhill Jam (THUG2)",12
 #,Player,Car,Time,BestLap,Finished,Cheating
-01,"FRANTJC","Candy Cane","00:30:537","00:29:888","true","false"
-02,"Probe 24","Probe 24","00:33:345","05:00:000","false","false"
+01,"Probe 24","Probe 24","00:30:537","00:29:888","true","false"
+02,"FRANTJC","Candy Cane","00:33:345","05:00:000","true","false"
 03,"Glacier","Glacier","00:37:993","05:00:000","false","false"
 04,"Black Widow","Black Widow","00:38:323","05:00:000","false","false"
 05,"Artair","Artair","00:40:429","05:00:000","false","false"

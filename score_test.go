@@ -69,8 +69,8 @@ func TestScoreSessionExclude(t *testing.T) {
 		t.Fatalf("unexpected player in 1st: %s", scores[0].Player)
 	}
 
-	if scores[0].Points != 36 {
-		t.Fatal("unexpected 1st place score")
+	if scores[0].Points != 35 {
+		t.Fatal("unexpected 1st place score:", scores[0].Points)
 	}
 }
 
@@ -84,7 +84,7 @@ func TestScoreSessionExcludeOutOfBounds(t *testing.T) {
 
 	for _, score := range scores {
 		if score.Points > 0 {
-			t.Fatal("races not excluded from score")
+			t.Fatal("unexpected 1st place score:", scores[0].Points)
 		}
 	}
 }
@@ -108,7 +108,79 @@ func TestScoreSessionHandicap(t *testing.T) {
 		t.Fatal("unexpected player in 1st:", scores[0].Player)
 	}
 
-	if scores[0].Points != 49 {
-		t.Fatal("unexpected 1st place score")
+	if scores[0].Points != 48 {
+		t.Fatal("unexpected 1st place score:", scores[0].Points)
+	}
+}
+
+func TestScoreSessionIntervalEqualToRacers(t *testing.T) {
+	session, err := rvglutils.DecodeSessionCSV(bytes.NewReader(testdata.SessionCSV))
+	if err != nil {
+		t.Fatalf("decode testdata/session.csv: %v", err)
+	}
+
+	var (
+		scores    = rvglutils.ScoreSession(session, &rvglutils.ScoreSessionOpts{Interval: 12})
+		lenScores = len(scores)
+	)
+
+	if lenScores == 0 {
+		t.Fatal("empty score")
+	}
+
+	if scores[0].Player != "FRANTJC" {
+		t.Fatal("unexpected player in 1st:", scores[0].Player)
+	}
+
+	if scores[0].Points != 11 {
+		t.Fatal("unexpected 1st place score:", scores[0].Points)
+	}
+}
+
+func TestScoreSessionIntervalOffset(t *testing.T) {
+	session, err := rvglutils.DecodeSessionCSV(bytes.NewReader(testdata.SessionCSV))
+	if err != nil {
+		t.Fatalf("decode testdata/session.csv: %v", err)
+	}
+
+	var (
+		scores    = rvglutils.ScoreSession(session, &rvglutils.ScoreSessionOpts{Interval: 24})
+		lenScores = len(scores)
+	)
+
+	if lenScores == 0 {
+		t.Fatal("empty score")
+	}
+
+	if scores[0].Player != "FRANTJC" {
+		t.Fatal("unexpected player in 1st:", scores[0].Player)
+	}
+
+	if scores[0].Points != 23 {
+		t.Fatal("unexpected 1st place score:", scores[0].Points)
+	}
+}
+
+func TestScoreSessionIgnoreAI(t *testing.T) {
+	session, err := rvglutils.DecodeSessionCSV(bytes.NewReader(testdata.SessionCSV))
+	if err != nil {
+		t.Fatalf("decode testdata/session.csv: %v", err)
+	}
+
+	var (
+		scores    = rvglutils.ScoreSession(session, &rvglutils.ScoreSessionOpts{Interval: 24})
+		lenScores = len(scores)
+	)
+
+	if lenScores == 0 {
+		t.Fatal("empty score")
+	}
+
+	if scores[0].Player != "FRANTJC" {
+		t.Fatal("unexpected player in 1st:", scores[0].Player)
+	}
+
+	if scores[0].Points != 23 {
+		t.Fatal("unexpected 1st place score:", scores[0].Points)
 	}
 }
