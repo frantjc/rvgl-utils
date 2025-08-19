@@ -22,8 +22,8 @@ jobs:
       - uses: crazy-max/ghaction-upx@v3
         with:
           install-only: true
-      - uses: sigstore/cosign-installer@v3.9.1
-      - uses: anchore/sbom-action/download-syft@v0.20.5 
+      - uses: sigstore/cosign-installer@v3.9.2
+      - uses: anchore/sbom-action/download-syft@v0.20.5
       - uses: goreleaser/goreleaser-action@v6
         with:
           args: release
