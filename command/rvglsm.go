@@ -1,19 +1,27 @@
 package command
 
 import (
+	"bytes"
 	"context"
+	"encoding/csv"
+	"errors"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strconv"
+	"strings"
 
+	"github.com/adrg/xdg"
 	rvglutils "github.com/frantjc/rvgl-utils"
 	"github.com/frantjc/rvgl-utils/sinks/discord"
 	"github.com/frantjc/rvgl-utils/sinks/stdout"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
+	"sigs.k8s.io/yaml"
 )
 
 func updateSession(ctx context.Context, sink rvglutils.Sink, sessionCSV string, opts ...rvglutils.UpdateSessionOpt) error {
@@ -82,6 +90,7 @@ func NewRVGLSM() *cobra.Command {
 		scoreSessionOpts      = &rvglutils.ScoreSessionOpts{}
 		laps                  int
 		sinkURL               string
+		multipliers           string
 		cmd                   = &cobra.Command{
 			Use:           "rvglsm",
 			SilenceErrors: true,
@@ -135,6 +144,21 @@ func NewRVGLSM() *cobra.Command {
 					}
 
 					return os.Rename(tmpProfileSettingsFile.Name(), profileSettingsFile.Name())
+				}
+
+				if multipliersFile, err := os.Open(multipliers); err == nil {
+					defer multipliersFile.Close() //nolint:errcheck
+
+					b, err := io.ReadAll(multipliersFile)
+					if err != nil {
+						return err
+					}
+
+					if err := yaml.Unmarshal(b, &scoreSessionOpts.Multipliers); err != nil {
+						return err
+					}
+				} else if !errors.Is(err, os.ErrNotExist) {
+					return err
 				}
 
 				sessionCSV, err := rvglutils.ResolveSessionCSV(resolveSessionCSVOpts)
@@ -213,8 +237,80 @@ func NewRVGLSM() *cobra.Command {
 	cmd.Flags().CountVarP(&scoreSessionOpts.ExcludeRaces, "exclude", "x", "Number of races at the beginning of the session to exclude")
 	cmd.Flags().StringToIntVarP(&scoreSessionOpts.Handicap, "handicap", "H", nil, "Handicap to apply")
 	cmd.Flags().StringVar(&prefPath, "prefpath", "", "RVGL -prefpath to search for the session in")
+	cmd.Flags().StringVarP(&multipliers, "multipliers", "m", filepath.Join(xdg.ConfigHome, cmd.Name(), "multipliers.json"), "Multipliers to apply")
+	cmd.Flags().VarP(newStringToFloat64Value(nil, &scoreSessionOpts.Multipliers), "multiplier", "M", "Multiplier to apply")
 
 	cmd.Flags().IntVar(&laps, "laps", 0, "Set NLaps in default profile.ini and exit")
 
 	return cmd
+}
+
+type stringToFloat64Value struct {
+	value   *map[string]float64
+	changed bool
+}
+
+func newStringToFloat64Value(val map[string]float64, p *map[string]float64) *stringToFloat64Value {
+	ssv := new(stringToFloat64Value)
+	ssv.value = p
+	*ssv.value = val
+	return ssv
+}
+
+func (s *stringToFloat64Value) Set(val string) error {
+	var ss []string
+	n := strings.Count(val, "=")
+	switch n {
+	case 0:
+		return fmt.Errorf("%s must be formatted as key=value", val)
+	case 1:
+		ss = append(ss, strings.Trim(val, `"`))
+	default:
+		r := csv.NewReader(strings.NewReader(val))
+		var err error
+		ss, err = r.Read()
+		if err != nil {
+			return err
+		}
+	}
+
+	out := make(map[string]float64, len(ss))
+	for _, pair := range ss {
+		kv := strings.SplitN(pair, "=", 2)
+		if len(kv) != 2 {
+			return fmt.Errorf("%s must be formatted as key=value", pair)
+		}
+		var err error
+		if out[kv[0]], err = strconv.ParseFloat(kv[1], 10); err != nil {
+			return err
+		}
+	}
+	if !s.changed {
+		*s.value = out
+	} else {
+		for k, v := range out {
+			(*s.value)[k] = v
+		}
+	}
+	s.changed = true
+	return nil
+}
+
+func (s *stringToFloat64Value) Type() string {
+	return "stringToFloat64"
+}
+
+func (s *stringToFloat64Value) String() string {
+	records := make([]string, 0, len(*s.value)>>1)
+	for k, v := range *s.value {
+		records = append(records, fmt.Sprintf("%s=%f", k, v))
+	}
+
+	var buf bytes.Buffer
+	w := csv.NewWriter(&buf)
+	if err := w.Write(records); err != nil {
+		panic(err)
+	}
+	w.Flush()
+	return "[" + strings.TrimSpace(buf.String()) + "]"
 }

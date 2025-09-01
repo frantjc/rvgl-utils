@@ -10,8 +10,14 @@ require (
 )
 
 require (
+	github.com/adrg/xdg v0.5.3 // indirect
+	go.yaml.in/yaml/v2 v2.4.2 // indirect
+)
+
+require (
 	github.com/frantjc/go-encoding-unixtable v0.0.0-20250525210830-38d52480722d
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	golang.org/x/sys v0.33.0 // indirect
+	sigs.k8s.io/yaml v1.6.0
 )

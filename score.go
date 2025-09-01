@@ -11,6 +11,7 @@ type ScoreSessionOpts struct {
 	ExtraPointsPerRace int
 	ExcludeRaces       int
 	Handicap           map[string]int
+	Multipliers        map[string]float64
 }
 
 func (o *ScoreSessionOpts) Apply(opts *ScoreSessionOpts) {
@@ -26,6 +27,9 @@ func (o *ScoreSessionOpts) Apply(opts *ScoreSessionOpts) {
 			if o.Handicap != nil {
 				opts.Handicap = o.Handicap
 			}
+			if o.Multipliers != nil {
+				opts.Multipliers = o.Multipliers
+			}
 		}
 	}
 }
@@ -36,7 +40,7 @@ type ScoreSessionOpt interface {
 
 type Score struct {
 	Player string
-	Points int
+	Points float64
 }
 
 func newScoreSessionOpts(opts ...ScoreSessionOpt) *ScoreSessionOpts {
@@ -56,7 +60,7 @@ func ScoreSession(session *Session, opts ...ScoreSessionOpt) []Score {
 
 	var (
 		o        = newScoreSessionOpts(opts...)
-		tmp      = make(map[string]int)
+		tmp      = make(map[string]float64)
 		lenRaces = len(session.Races)
 	)
 	if o.ExcludeRaces > lenRaces {
@@ -66,7 +70,7 @@ func ScoreSession(session *Session, opts ...ScoreSessionOpt) []Score {
 	}
 
 	for k, v := range o.Handicap {
-		tmp[k] = v
+		tmp[k] = float64(v)
 	}
 
 	for _, race := range session.Races[o.ExcludeRaces:] {
@@ -77,14 +81,20 @@ func ScoreSession(session *Session, opts ...ScoreSessionOpt) []Score {
 				continue
 			}
 
-			points := 1 + o.ExtraPointsPerRace + players - result.Position
+			points := float64(1 + o.ExtraPointsPerRace + players - result.Position)
 			if points < 0 {
 				points = 0
 			}
 
+			if o.Multipliers != nil {
+				if multiplier, ok := o.Multipliers[result.Car]; ok {
+					points *= multiplier
+				}
+			}
+
 			tmp[result.Player] += points
 
-			if tmp[result.Player] >= o.Interval && o.Interval > 0 {
+			if tmp[result.Player] >= float64(o.Interval) && o.Interval > 0 {
 				tmp[result.Player] = 0
 			}
 		}

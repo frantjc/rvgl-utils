@@ -184,3 +184,29 @@ func TestScoreSessionIgnoreAI(t *testing.T) {
 		t.Fatal("unexpected 1st place score:", scores[0].Points)
 	}
 }
+
+func TestScoreSessionMultipliers(t *testing.T) {
+	session, err := rvglutils.DecodeSessionCSV(bytes.NewReader(testdata.SessionCSV))
+	if err != nil {
+		t.Fatalf("decode testdata/session.csv: %v", err)
+	}
+
+	var (
+		scores = rvglutils.ScoreSession(session, &rvglutils.ScoreSessionOpts{Multipliers: map[string]float64{
+			"Candy Cane": 0,
+		}})
+		lenScores = len(scores)
+	)
+
+	if lenScores == 0 {
+		t.Fatal("empty score")
+	}
+
+	if scores[0].Player != "FRANTJC" {
+		t.Fatal("unexpected player in 1st:", scores[0].Player)
+	}
+
+	if scores[0].Points != 0 {
+		t.Fatal("unexpected last place score:", scores[0].Points)
+	}
+}
