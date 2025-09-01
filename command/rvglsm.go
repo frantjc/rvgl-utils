@@ -281,7 +281,7 @@ func (s *stringToFloat64Value) Set(val string) error {
 			return fmt.Errorf("%s must be formatted as key=value", pair)
 		}
 		var err error
-		if out[kv[0]], err = strconv.ParseFloat(kv[1], 10); err != nil {
+		if out[kv[0]], err = strconv.ParseFloat(kv[1], 64); err != nil {
 			return err
 		}
 	}
