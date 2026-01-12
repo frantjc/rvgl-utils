@@ -80,7 +80,7 @@ func (m *RvglUtilsDev) Release(
 	return dag.Release(
 		m.Source.AsGit().LatestVersion(),
 	).
-		Create(ctx, githubToken, githubRepo, "./cmd/rvglsm", dagger.ReleaseCreateOpts{Brew: true})
+		Create(ctx, githubToken, githubRepo, "rvglsm", dagger.ReleaseCreateOpts{Brew: true})
 }
 
 func (m *RvglUtilsDev) Binary(
@@ -96,7 +96,7 @@ func (m *RvglUtilsDev) Binary(
 		Module: m.Source,
 	}).
 		Build(dagger.GoBuildOpts{
-			Pkg:     "./cmd/rvglUtils",
+			Pkg:     "./cmd/rvglsm",
 			Ldflags: "-s -w -X main.version=" + version,
 			Goos:    goos,
 			Goarch:  goarch,
