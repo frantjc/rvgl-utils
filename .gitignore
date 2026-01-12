@@ -1,1 +1,9 @@
-dist/
+# IDE
+.idea/
+.vscode/
+
+# make
+/bin
+
+# macOS
+.DS_Store

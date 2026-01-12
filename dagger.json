@@ -1,0 +1,26 @@
+{
+  "name": "rvgl-utils-dev",
+  "engineVersion": "v0.19.9",
+  "sdk": {
+    "source": "go"
+  },
+  "dependencies": [
+    {
+      "name": "go",
+      "source": "github.com/frantjc/daggerverse/go@main",
+      "pin": "8518f19d90099d9a17ef15492789d12e692aca96"
+    },
+    {
+      "name": "release",
+      "source": "github.com/frantjc/daggerverse/release@main",
+      "pin": "8518f19d90099d9a17ef15492789d12e692aca96"
+    },
+    {
+      "name": "wolfi",
+      "source": "github.com/dagger/dagger/modules/wolfi@v0.19.9",
+      "pin": "42e7b630c9f48f2a9bca26af4f6261b6e54d7374"
+    }
+  ],
+  "source": ".dagger",
+  "disableDefaultFunctionCaching": true
+}
