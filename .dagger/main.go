@@ -80,7 +80,7 @@ func (m *RvglUtilsDev) Release(
 	return dag.Release(
 		m.Source.AsGit().LatestVersion(),
 	).
-		Create(ctx, githubToken, githubRepo, "./cmd/rvglUtils", dagger.ReleaseCreateOpts{Brew: true})
+		Create(ctx, githubToken, githubRepo, "./cmd/rvglsm", dagger.ReleaseCreateOpts{Brew: true})
 }
 
 func (m *RvglUtilsDev) Binary(
