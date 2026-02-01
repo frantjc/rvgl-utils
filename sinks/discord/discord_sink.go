@@ -46,10 +46,10 @@ func (s *Sink) UpdateSession(ctx context.Context, session *rvglutils.Session, op
 	scores := rvglutils.ScoreSession(session, o.ScoreSessionOpts)
 
 	for i, score := range scores {
-		format := "%s: %d\n"
+		format := "%s: %g\n"
 
 		if o.Final && i == 0 {
-			format = "**WINNER! %s**: %d\n"
+			format = "**WINNER! %s**: %g\n"
 		}
 
 		if _, err := content.WriteString(fmt.Sprintf(format, score.Player, score.Points)); err != nil {

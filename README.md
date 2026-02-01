@@ -23,7 +23,7 @@ From source:
 ```sh
 git clone https://github.com/frantjc/rvgl-utils
 cd rvgl-utils
-go install ./cmd/rvglsm
+make install
 ```
 
 ## Use
